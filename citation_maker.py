@@ -19,6 +19,10 @@ def get_bibtex_entry(item):
     if article_number == "1":
         article_number = None
 
+    # Format page range with --
+    if page and "-" in page:
+        page = page.replace("-", "--")
+
     # Title and key
     title_str = item.get("title", [""])[0]
     bib_key = f"{authors[0]['family']}{year}" if authors and year else "citationKey"
@@ -28,7 +32,7 @@ def get_bibtex_entry(item):
         f"@article{{{bib_key},",
         f"  title = {{{title_str}}},",
         f"  author = {{{author_str}}},",
-        f"  journal = {{{journal}}},",
+        f"  journal = {{{journal}}},"
     ]
 
     if volume:
@@ -43,7 +47,11 @@ def get_bibtex_entry(item):
         bibtex_lines.append(f"  pages = {{{article_number}}},")
 
     if year:
-        bibtex_lines.append(f"  year = {{{year}}},")
+        bibtex_lines.append(f"  year = {{{year}}}")
+
+    # Remove trailing comma from last field, if any
+    if bibtex_lines[-1].endswith(","):
+        bibtex_lines[-1] = bibtex_lines[-1][:-1]
 
     bibtex_lines.append("}")
 
