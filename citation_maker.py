@@ -10,21 +10,44 @@ def get_bibtex_entry(item):
     journal = item.get("container-title", [""])[0]
     volume = item.get("volume", "")
     issue = item.get("issue", "")
-    page = item.get("page", "")
-    title_str = item.get("title", [""])[0]
+    
+    # Get page or article number
+    page = item.get("page")
+    article_number = item.get("article-number") or item.get("article_number")
+    
+    # Filter out sketchy article_number = "1"
+    if article_number == "1":
+        article_number = None
 
+    # Title and key
+    title_str = item.get("title", [""])[0]
     bib_key = f"{authors[0]['family']}{year}" if authors and year else "citationKey"
 
-    bibtex = f"""@article{{{bib_key},
-  title = {{{title_str}}},
-  author = {{{author_str}}},
-  journal = {{{journal}}},
-  volume = {{{volume}}},
-  number = {{{issue}}},
-  page = item.get("page") or item.get("article-number") or item.get("article_number", "")
-  year = {{{year}}}
-}}"""
-    return bibtex
+    # Start building BibTeX
+    bibtex_lines = [
+        f"@article{{{bib_key},",
+        f"  title = {{{title_str}}},",
+        f"  author = {{{author_str}}},",
+        f"  journal = {{{journal}}},",
+    ]
+
+    if volume:
+        bibtex_lines.append(f"  volume = {{{volume}}},")
+
+    if issue:
+        bibtex_lines.append(f"  number = {{{issue}}},")
+
+    if page:
+        bibtex_lines.append(f"  pages = {{{page}}},")
+    elif article_number:
+        bibtex_lines.append(f"  pages = {{{article_number}}},")
+
+    if year:
+        bibtex_lines.append(f"  year = {{{year}}},")
+
+    bibtex_lines.append("}")
+
+    return "\n".join(bibtex_lines)
 
 def search_papers(title, max_results=5):
     url = "https://api.crossref.org/works"
